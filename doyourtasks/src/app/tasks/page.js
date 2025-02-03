@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/auth/authContext";
+import useAuth from "../auth/authContext";
 
 export default function Tasks() {
     const { user } = useAuth();
@@ -10,7 +10,7 @@ export default function Tasks() {
 
     useEffect(() => {
         if (!user) {
-            router.push("/auth/register");
+            router.push("/auth/signUp");
         }
     }, [user, router]);
 
