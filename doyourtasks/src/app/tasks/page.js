@@ -10,9 +10,9 @@ export default function Tasks() {
 
     useEffect(() => {
         if (!user) {
-            router.push("/auth/signUp");
+            router.push("/auth/signIn");
         }
     }, [user, router]);
 
-    return user ? <h1>Bienvenido a la pagina principal user</h1> : null;
+    return <h1>He conseguido entrar</h1>;
 }

@@ -13,11 +13,6 @@ export default function SignUp() {
     const { user } = useAuth();
     const router = useRouter();
 
-    if (user) {
-        router.push("/tasks");
-        return;
-    }
-
     async function handleRegister(event) {
         event.preventDefault();
         setError(null);
@@ -45,7 +40,7 @@ export default function SignUp() {
             );
         }
 
-        const response = await fetch("/api/auth", {
+        const response = await fetch("/api/auth/signUp", {
             method: "POST",
             headers: { "Content-Type": "application-json" },
             body: JSON.stringify({ email, password, username }),
@@ -94,7 +89,7 @@ export default function SignUp() {
                 <button type="submit">Sign Up</button>
             </form>
             <p>
-                <Link href={"/auth/login"}>Already have an account?</Link>
+                <Link href={"/auth/signIn"}>Already have an account?</Link>
             </p>
         </div>
     );
