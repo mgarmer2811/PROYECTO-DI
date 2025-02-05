@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import useAuth from "../authContext";
+import Cookies from "js-cookie";
 
 export default function SignIn() {
     const [username, setUsername] = useState("");
@@ -32,7 +33,6 @@ export default function SignIn() {
         });
 
         const result = await response.json();
-
         if (!response.ok) {
             setError(result.error || "Error in login");
             return;
@@ -41,6 +41,9 @@ export default function SignIn() {
         const { session } = result;
         if (session?.user) {
             setUser(session.user);
+            Cookies.set("supabase-auth-token", session.access_token, {
+                expires: 15,
+            });
         }
 
         router.push("/tasks");
