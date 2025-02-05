@@ -17,11 +17,11 @@ export default function SignIn() {
         event.preventDefault();
         setError(null);
 
-        if (username === "") {
+        if (!username.trim()) {
             alert("Username field is blank. Please fill it");
             return;
         }
-        if (password === "") {
+        if (!password.trim()) {
             alert("Password field is blank. Please fill it");
             return;
         }
@@ -38,12 +38,17 @@ export default function SignIn() {
             return;
         }
 
-        const { session } = result;
+        const session = result.session;
         if (session?.user) {
             setUser(session.user);
-            Cookies.set("supabase-auth-token", session.access_token, {
-                expires: 15,
-            });
+            Cookies.set(
+                "supabase-auth-token",
+                JSON.stringify({
+                    access_token: session.access_token,
+                    refresh_token: session.refresh_token,
+                }),
+                { expires: 15 }
+            );
         }
 
         router.push("/tasks");

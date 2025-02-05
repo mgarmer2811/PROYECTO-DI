@@ -7,9 +7,7 @@ export async function POST(request) {
         if (!username || !password) {
             return new Response(
                 JSON.stringify({ error: "Username and password are required" }),
-                {
-                    status: 400,
-                }
+                { status: 400 }
             );
         }
 
@@ -20,11 +18,11 @@ export async function POST(request) {
             .single();
 
         if (userError || !userData) {
+            console.log("user error: ", userError);
+            console.log("user data: ", userData);
             return new Response(
                 JSON.stringify({ error: "User not found or doesn't exist" }),
-                {
-                    status: 404,
-                }
+                { status: 404 }
             );
         }
 
@@ -43,13 +41,12 @@ export async function POST(request) {
         return new Response(
             JSON.stringify({
                 success: "Login successful",
-                session: sessionData,
+                session: sessionData.session,
             }),
-            {
-                status: 200,
-            }
+            { status: 200 }
         );
     } catch (error) {
+        console.error("Server error:", error);
         return new Response(JSON.stringify({ error: "Server error" }), {
             status: 500,
         });
