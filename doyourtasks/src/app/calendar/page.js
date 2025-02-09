@@ -4,15 +4,17 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "../auth/authContext";
 import Cookies from "js-cookie";
-import supabase from "../../../utils/supabase";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
 
-export default function Tasks() {
+export default function CalendarPage() {
     const { user } = useAuth();
     const router = useRouter();
     const [notes, setNotes] = useState([]);
-    const [category, setCategory] = useState(1);
     const [newNote, setNewNote] = useState("");
     const [showInput, setShowInput] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [notesForSelectedDate, setNotesForSelectedDate] = useState([]);
 
     useEffect(() => {
         const tokenData = Cookies.get("supabase-auth-token");
@@ -39,7 +41,7 @@ export default function Tasks() {
         if (user) {
             fetchNotes();
         }
-    }, [user, category]);
+    }, [user]);
 
     async function fetchNotes() {
         const tokenData = Cookies.get("supabase-auth-token");
@@ -67,8 +69,22 @@ export default function Tasks() {
         setNotes(data);
     }
 
+    function handleDateSelect(date) {
+        setSelectedDate(date);
+
+        const filteredNotes = notes.filter((note) => {
+            const noteDate = new Date(note.due_date);
+            return (
+                noteDate.getFullYear() === date.getFullYear() &&
+                noteDate.getMonth() === date.getMonth() &&
+                noteDate.getDate() === date.getDate()
+            );
+        });
+        setNotesForSelectedDate(filteredNotes);
+    }
+
     async function handleAddNote() {
-        if (!newNote.trim()) return;
+        if (!newNote.trim() || !selectedDate) return;
 
         const response = await fetch("/api/tasks", {
             method: "POST",
@@ -79,7 +95,7 @@ export default function Tasks() {
                 text: newNote,
                 category: category,
                 user_id: user?.id,
-                due_date: new Date(),
+                due_date: selectedDate.toISOString(),
             }),
         });
 
@@ -89,125 +105,103 @@ export default function Tasks() {
             setNewNote("");
             setShowInput(false);
             fetchNotes();
+            handleDateSelect(selectedDate);
         } else {
             alert("Error adding note:", data.error);
         }
     }
 
-    async function handleDeleteNote(id) {
-        const response = await fetch("/api/tasks", {
-            method: "DELETE",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ id: id }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            fetchNotes();
-        } else {
-            console.error("Error deleting note:", data.error);
-        }
-    }
-
     return (
         <div style={{ padding: "16px", paddingBottom: "80px" }}>
-            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
-                {[1, 2, 3, 4].map((num) => (
-                    <button
-                        key={num}
-                        style={{
-                            padding: "8px 16px",
-                            borderRadius: "4px",
-                            backgroundColor:
-                                category === num ? "#007BFF" : "#E0E0E0",
-                            color: category === num ? "white" : "black",
-                            border: "none",
-                            cursor: "pointer",
-                        }}
-                        onClick={() => setCategory(num)}
-                    >
-                        Categoría {num}
-                    </button>
-                ))}
+            <h3>Calendario</h3>
+            <div>
+                <Calendar onChange={handleDateSelect} value={selectedDate} />
             </div>
-            <ul style={{ marginBottom: "16px", listStyle: "none", padding: 0 }}>
-                {notes.map((note) => (
-                    <li
-                        key={note.id}
-                        style={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            backgroundColor: "#F5F5F5",
-                            padding: "8px",
-                            borderRadius: "4px",
-                            marginBottom: "8px",
-                        }}
-                    >
-                        <div>
-                            <p>{note.text}</p>
-                            <small style={{ color: "#757575" }}>
-                                {new Date(note.due_date).toLocaleDateString()}
-                            </small>
-                        </div>
-                        <input
-                            type="checkbox"
-                            onChange={() => handleDeleteNote(note.id)}
-                            style={{ marginLeft: "8px" }}
-                        />
-                    </li>
-                ))}
-            </ul>
-            {showInput ? (
-                <div
+
+            <div style={{ marginTop: "20px" }}>
+                <h4>Notas para {selectedDate.toLocaleDateString()}</h4>
+                <ul
                     style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "8px",
+                        marginBottom: "16px",
+                        listStyle: "none",
+                        padding: 0,
                     }}
                 >
-                    <textarea
+                    {notesForSelectedDate.map((note) => (
+                        <li
+                            key={note.id}
+                            style={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                backgroundColor: "#F5F5F5",
+                                padding: "8px",
+                                borderRadius: "4px",
+                                marginBottom: "8px",
+                            }}
+                        >
+                            <div>
+                                <p>{note.text}</p>
+                                <small style={{ color: "#757575" }}>
+                                    {new Date(
+                                        note.due_date
+                                    ).toLocaleDateString()}
+                                </small>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+
+                {showInput && (
+                    <div
                         style={{
-                            border: "1px solid #ccc",
-                            borderRadius: "4px",
-                            padding: "8px",
-                            resize: "none",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "8px",
                         }}
-                        value={newNote}
-                        onChange={(e) => setNewNote(e.target.value)}
-                    />
+                    >
+                        <textarea
+                            style={{
+                                border: "1px solid #ccc",
+                                borderRadius: "4px",
+                                padding: "8px",
+                                resize: "none",
+                            }}
+                            value={newNote}
+                            onChange={(e) => setNewNote(e.target.value)}
+                        />
+                        <button
+                            style={{
+                                backgroundColor: "#28A745",
+                                color: "white",
+                                padding: "8px 16px",
+                                borderRadius: "4px",
+                                border: "none",
+                                cursor: "pointer",
+                            }}
+                            onClick={handleAddNote}
+                        >
+                            Guardar Nota
+                        </button>
+                    </div>
+                )}
+                {!showInput && (
                     <button
                         style={{
-                            backgroundColor: "#28A745",
+                            backgroundColor: "#007BFF",
                             color: "white",
                             padding: "8px 16px",
                             borderRadius: "4px",
                             border: "none",
                             cursor: "pointer",
                         }}
-                        onClick={handleAddNote}
+                        onClick={() => setShowInput(true)}
                     >
-                        Guardar Nota
+                        Agregar Nota
                     </button>
-                </div>
-            ) : (
-                <button
-                    style={{
-                        backgroundColor: "#007BFF",
-                        color: "white",
-                        padding: "8px 16px",
-                        borderRadius: "4px",
-                        border: "none",
-                        cursor: "pointer",
-                    }}
-                    onClick={() => setShowInput(true)}
-                >
-                    Agregar Nota
-                </button>
-            )}
+                )}
+            </div>
+
             <div
                 style={{
                     position: "fixed",
